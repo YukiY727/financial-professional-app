@@ -692,121 +692,104 @@ def calculate_income_tax(income):
 
 ### 2.5 プログラミング言語選択
 
-#### 基本方針：フェーズによる柔軟な言語選択
+#### 基本方針：型安全性とトレードオフ
 
-**原則**:
-- **フェーズごとに最適な言語を選択可能**
-- **ただし、無計画な言語追加は避ける**
-- **保守コスト（学習、ツール、デプロイ）を常に考慮**
+**金融アプリの特殊性**:
 
----
+- ❗ **計算ミスは致命的**: 税金計算のバグは信頼を失う
+- ❗ **型安全性が最優先**: コンパイル時のエラー検出が重要
+- ❗ **長期保守**: 税制変更に対応し続ける必要がある
 
-#### Option A: Python
+**言語選択の優先順位**:
 
-**適用例**:
-```python
-# backend/domain/tax_calculator.py
-def calculate_income_tax(taxable_income: int) -> int:
-    """所得税を計算"""
-    if taxable_income <= 1_950_000:
-        return int(taxable_income * 0.05)
-    elif taxable_income <= 3_300_000:
-        return int(taxable_income * 0.10 - 97_500)
-    # ...
-```
-
-**Pros**:
-
-- **生産性**: シンプルな文法、早い開発速度
-- **数値計算**: NumPy、Pandas、SciPyなど強力なライブラリ
-- **データ分析**: データサイエンス、統計処理に強い
-- **Webフレームワーク**: FastAPI、Djangoが優秀
-- **型ヒント**: Python 3.10+ では型安全性が向上
-- **学習コスト**: 低い（初心者でも習得しやすい）
-- **テスト**: pytest、unittest が成熟
-
-**Cons**:
-
-- **パフォーマンス**: 実行速度が遅い（GILの制約）
-- **型安全性**: 動的型付け（ランタイムエラーのリスク）
-- **デプロイ**: 依存関係の管理が面倒（requirements.txt、venv）
-- **並行処理**: マルチスレッドが弱い（asyncio は強い）
-- **大規模**: 大規模システムでは設計が難しい
-
-**適用判断**:
-
-- ✅ MVP、プロトタイプ
-- ✅ データ分析、統計処理
-- ✅ 数値計算ロジック（税金、投資シミュレーション）
-- ✅ Web API（FastAPI）
-
-**このプロジェクトでの選択**: ✅ **Phase 1-2 のバックエンドで採用**
-
-**理由**:
-- 税金計算、投資計算は数値処理が中心
-- FastAPI で高速なAPI開発
-- MVP段階では生産性を最優先
+1. **型安全性** > 開発速度
+2. **保守性** > 初期実装コスト
+3. **テスタビリティ** > パフォーマンス（測定後に最適化）
 
 ---
 
-#### Option B: TypeScript
+#### Option A: TypeScript（最推奨 - フルスタック統一）
 
 **適用例**:
 
 ```typescript
-// frontend/src/domain/taxCalculator.ts
+// shared/domain/taxCalculator.ts
 export function calculateIncomeTax(taxableIncome: number): number {
   if (taxableIncome <= 1_950_000) {
     return Math.floor(taxableIncome * 0.05);
   } else if (taxableIncome <= 3_300_000) {
     return Math.floor(taxableIncome * 0.10 - 97_500);
+  } else if (taxableIncome <= 6_950_000) {
+    return Math.floor(taxableIncome * 0.20 - 427_500);
   }
   // ...
+  throw new Error(`Invalid taxable income: ${taxableIncome}`);
 }
 
-// API型定義
-interface SimulationRequest {
-  profile: {
-    currentAge: number;
-    retirementAge: number;
-    currentAnnualIncome: number;
-  };
+// 型定義を共有
+interface TaxCalculationResult {
+  incomeTax: number;
+  residentTax: number;
+  socialInsurance: number;
+  total: number;
+}
+
+// バックエンド: Node.js / Deno / Bun
+// backend/api/simulation.ts
+import { calculateIncomeTax } from '../shared/domain/taxCalculator';
+
+app.post('/api/simulate', (req, res) => {
+  const tax = calculateIncomeTax(req.body.income);
+  // ...
+});
+
+// フロントエンド: React
+// frontend/src/components/SimulationForm.tsx
+import { calculateIncomeTax } from '../../shared/domain/taxCalculator';
+
+function SimulationForm() {
+  const previewTax = calculateIncomeTax(income); // クライアントサイドプレビュー
+  // ...
 }
 ```
 
 **Pros**:
 
-- **型安全**: 静的型チェック、コンパイル時エラー検出
-- **フロントエンド**: React、Vue、Angularのデファクトスタンダード
-- **バックエンド**: Node.js、Deno、Bunで使える
-- **エコシステム**: npm、型定義ライブラリが豊富
-- **開発体験**: IDE補完、リファクタリング支援が強力
-- **型共有**: フロントエンド/バックエンドで型を共有可能
+- ✅ **型安全性**: 静的型チェック、コンパイル時エラー検出
+- ✅ **フロント/バック統一**: 同じ言語、同じロジック、同じ型定義
+- ✅ **コード共有**: 計算ロジックをフロント/バックで再利用
+- ✅ **開発体験**: IDE補完、リファクタリング支援が強力
+- ✅ **エコシステム**: npm、型定義ライブラリが豊富
+- ✅ **バックエンド選択肢**: Node.js、Deno、Bunから選べる
+- ✅ **学習コスト**: 1つの言語習得で全スタック開発可能
+- ✅ **デプロイ**: Vercel、Cloudflare Workers等のエッジ環境
 
 **Cons**:
 
-- **学習コスト**: 型システムの理解が必要
-- **ビルド**: トランスパイルが必要（tsc、esbuild）
-- **パフォーマンス**: Node.jsは計算処理が遅い
-- **数値計算**: ライブラリがPythonほど充実していない
+- ⚠️ **数値計算**: PythonのNumPy/Pandasほど充実していない
+- ⚠️ **パフォーマンス**: Node.jsは重い計算が苦手
+- ⚠️ **学習コスト**: 型システムの理解が必要（ただし1回だけ）
 
 **適用判断**:
 
-- ✅ フロントエンド（React、Vue）
-- ✅ フルスタック（型共有のメリット）
-- ✅ 型安全性が重要な箇所
-- ✅ バックエンドAPI（Node.js、Deno）
+- ✅ フルスタック開発（フロント/バックを統一したい）
+- ✅ 型安全性が最重要
+- ✅ コード共有のメリットが大きい
+- ✅ モダンなエコシステムを活用したい
 
-**このプロジェクトでの選択**: ✅ **Phase 2以降のフロントエンドで採用**
+**このプロジェクトでの選択**: ✅ **Phase 1から採用（最推奨）**
 
 **理由**:
-- React + TypeScriptでリッチなUIを構築
-- API型定義をバックエンドと共有可能
-- 型安全性でバグを減らす
+
+- **型安全性が最優先**: 金融計算でランタイムエラーは許されない
+- **フロント/バック統一**: 計算ロジックを両方で使える（リアルタイムプレビュー）
+- **長期保守**: 税制変更時の修正が1箇所で済む
+- **学習効率**: チームが1つの言語に集中できる
+- **MVP速度**: Deno/Bunなら依存関係管理がシンプル
 
 ---
 
-#### Option C: Go
+#### Option B: Go（パフォーマンス重視）
 
 **適用例**:
 
@@ -814,182 +797,344 @@ interface SimulationRequest {
 // backend/domain/tax_calculator.go
 package domain
 
-func CalculateIncomeTax(taxableIncome int) int {
+import "errors"
+
+// 型安全: コンパイル時に型エラーを検出
+func CalculateIncomeTax(taxableIncome int) (int, error) {
+    if taxableIncome < 0 {
+        return 0, errors.New("taxable income must be non-negative")
+    }
+
     if taxableIncome <= 1_950_000 {
-        return taxableIncome * 5 / 100
+        return taxableIncome * 5 / 100, nil
     } else if taxableIncome <= 3_300_000 {
-        return taxableIncome * 10 / 100 - 97_500
+        return taxableIncome*10/100 - 97_500, nil
+    } else if taxableIncome <= 6_950_000 {
+        return taxableIncome*20/100 - 427_500, nil
     }
     // ...
+    return 0, errors.New("invalid taxable income")
+}
+
+// 構造体で型定義
+type TaxCalculationResult struct {
+    IncomeTax       int
+    ResidentTax     int
+    SocialInsurance int
+    Total           int
 }
 ```
 
 **Pros**:
 
-- **パフォーマンス**: C言語並みの高速処理
-- **並行処理**: goroutine、channelで並行処理が容易
-- **シンプル**: 言語仕様が小さい、学習コスト低い
-- **型安全**: 静的型付け、コンパイル時エラー検出
-- **デプロイ**: シングルバイナリ、依存関係なし
-- **スケーラビリティ**: 大規模システムに強い
-- **メモリ効率**: GC付きで低メモリ消費
+- ✅ **型安全性**: 静的型付け、コンパイル時エラー検出
+- ✅ **パフォーマンス**: C言語並みの高速処理
+- ✅ **並行処理**: goroutine、channelで並行処理が容易
+- ✅ **シンプル**: 言語仕様が小さい、学習コスト比較的低い
+- ✅ **デプロイ**: シングルバイナリ、依存関係なし
+- ✅ **メモリ効率**: GC付きで低メモリ消費
+- ✅ **スケーラビリティ**: 大規模システムに強い
 
 **Cons**:
 
-- **エコシステム**: Webフレームワークが少ない
-- **数値計算**: ライブラリがPythonより少ない
-- **ジェネリクス**: Go 1.18+ で追加されたが制約あり
-- **エラーハンドリング**: if err != nil の繰り返し
+- ⚠️ **エコシステム**: Webフレームワークが少ない
+- ⚠️ **数値計算**: ライブラリがPython/TypeScriptより少ない
+- ⚠️ **フロントエンド**: WebAssemblyは可能だがエコシステム未成熟
+- ⚠️ **エラーハンドリング**: if err != nil の繰り返し
+- ⚠️ **ジェネリクス**: Go 1.18+ で追加されたが制約あり
 
 **適用判断**:
 
 - ✅ パフォーマンスが重要
-- ✅ 大量の並行処理（Webサーバー、バッチ処理）
+- ✅ 大量の並行処理（大規模シミュレーション）
 - ✅ マイクロサービス
-- ✅ スケーラビリティが必要
+- ✅ バックエンドのみの開発
 
-**このプロジェクトでの選択**: ⏰ **Phase 3以降で部分採用を検討**
+**このプロジェクトでの選択**: ⏰ **Phase 2以降で部分採用を検討**
 
 **採用検討シナリオ**:
+
 - 大規模シミュレーション（10,000シナリオのモンテカルロ）
 - パフォーマンスボトルネック（計算エンジン）
 - マイクロサービス化（simulation-service）
 
+**理由**:
+
+- Phase 1ではTypeScriptで十分（測定ファースト）
+- パフォーマンス問題が実測された時点で導入
+- バックエンドの一部のみをGoに置き換え可能
+
 ---
 
-#### Option D: Rust
+#### Option C: Python（プロトタイピング・データ分析用）
 
 **適用例**:
+
+```python
+# scripts/tax_analysis.py
+from typing import NamedTuple
+import pandas as pd
+import matplotlib.pyplot as plt
+
+class TaxResult(NamedTuple):
+    income: int
+    tax: int
+    effective_rate: float
+
+def calculate_income_tax(taxable_income: int) -> int:
+    """所得税を計算（型ヒント付き）"""
+    if taxable_income <= 1_950_000:
+        return int(taxable_income * 0.05)
+    elif taxable_income <= 3_300_000:
+        return int(taxable_income * 0.10 - 97_500)
+    # ...
+
+# データ分析
+incomes = range(1_000_000, 10_000_000, 100_000)
+results = [TaxResult(inc, calculate_income_tax(inc), ...) for inc in incomes]
+df = pd.DataFrame(results)
+df.plot(x='income', y='effective_rate')
+```
+
+**Pros**:
+
+- ✅ **プロトタイピング**: 早い開発速度、試行錯誤に向く
+- ✅ **データ分析**: NumPy、Pandas、Matplotlibが強力
+- ✅ **学習コスト**: 低い（初心者でも習得しやすい）
+- ✅ **スクリプト**: ワンタイムスクリプト、データ移行に便利
+- ✅ **型ヒント**: Python 3.10+ で型安全性が向上（ただし実行時チェックなし）
+
+**Cons**:
+
+- ❌ **型安全性**: 動的型付け、**ランタイムエラーのリスク大**
+- ❌ **本番運用**: 金融計算の本番コードには不適
+- ❌ **パフォーマンス**: 実行速度が遅い（GILの制約）
+- ❌ **デプロイ**: 依存関係の管理が面倒（requirements.txt、venv）
+
+**適用判断**:
+
+- ✅ プロトタイピング、実験的コード
+- ✅ データ分析、統計処理
+- ✅ ワンタイムスクリプト
+- ❌ **本番の計算ロジック（型安全性が必要）**
+
+**このプロジェクトでの選択**: ⏰ **補助ツールのみ採用**
+
+**採用範囲**:
+
+- ✅ データ分析スクリプト（税制シミュレーション比較）
+- ✅ 開発ツール（テストデータ生成）
+- ✅ マイグレーションスクリプト
+- ❌ **本番APIコード（TypeScript/Goを使用）**
+
+**重要な決定**:
+
+> Pythonは動的型付けのため、**金融計算の本番コードには採用しない**。
+> データ分析やスクリプトのみに限定する。
+
+---
+
+#### Option D: Rust（極限最適化用）
+
+**適用例**:
+
 ```rust
-// backend/domain/tax_calculator.rs
-pub fn calculate_income_tax(taxable_income: u32) -> u32 {
+// wasm/monte_carlo.rs (WebAssembly用)
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn calculate_income_tax(taxable_income: u32) -> Result<u32, JsValue> {
     match taxable_income {
-        0..=1_950_000 => (taxable_income as f64 * 0.05) as u32,
-        1_950_001..=3_300_000 => (taxable_income as f64 * 0.10 - 97_500.0) as u32,
-        // ...
+        0..=1_950_000 => Ok((taxable_income as f64 * 0.05) as u32),
+        1_950_001..=3_300_000 => Ok((taxable_income as f64 * 0.10 - 97_500.0) as u32),
+        1_950_001..=6_950_000 => Ok((taxable_income as f64 * 0.20 - 427_500.0) as u32),
+        _ => Err(JsValue::from_str("Invalid taxable income")),
     }
+}
+
+// モンテカルロシミュレーション（10万回を1秒以内）
+#[wasm_bindgen]
+pub fn monte_carlo_simulation(scenarios: u32) -> Vec<u32> {
+    (0..scenarios)
+        .into_par_iter() // Rayon: 並列処理
+        .map(|_| run_single_scenario())
+        .collect()
 }
 ```
 
 **Pros**:
 
-- **パフォーマンス**: C/C++並みの最高速度
-- **メモリ安全**: 所有権システム、ゼロコストな抽象化
-- **型安全**: 強力な型システム、コンパイル時エラー検出
-- **並行処理**: データ競合をコンパイル時に防ぐ
-- **WebAssembly**: ブラウザで実行可能（フロントエンド計算）
+- ✅ **型安全性**: 最強の型システム、コンパイル時エラー検出
+- ✅ **パフォーマンス**: C/C++並みの最高速度
+- ✅ **メモリ安全**: 所有権システム、ゼロコストな抽象化
+- ✅ **並行処理**: データ競合をコンパイル時に防ぐ
+- ✅ **WebAssembly**: ブラウザで実行可能（計算をクライアントサイドで）
 
 **Cons**:
 
-- **学習コスト**: 非常に高い（所有権、ライフタイム）
-- **開発速度**: コンパイルエラーと戦う時間が長い
-- **エコシステム**: Webフレームワークが未成熟
-- **採用**: 人材が少ない
+- ❌ **学習コスト**: 非常に高い（所有権、ライフタイム）
+- ❌ **開発速度**: コンパイルエラーと戦う時間が長い
+- ❌ **エコシステム**: Webフレームワークが未成熟
+- ❌ **人材**: 採用が困難
 
 **適用判断**:
 
-- ✅ 極限のパフォーマンス
 - ✅ WebAssembly（ブラウザで重い計算）
+- ✅ 極限のパフォーマンス（10万回シミュレーション）
 - ✅ システムプログラミング
-- ❌ MVP、プロトタイプ（学習コストが高すぎる）
+- ❌ **MVP、プロトタイプ（学習コストが高すぎる）**
 
-**このプロジェクトでの選択**: ⏰ **Phase 4以降で部分採用を検討**
+**このプロジェクトでの選択**: ⏰ **Phase 3以降で部分採用を検討**
 
 **採用検討シナリオ**:
-- WebAssembly化（ブラウザで大規模シミュレーション）
-- 計算エンジンの最適化（モンテカルロ10万回）
 
----
-
-### 2.5.1 このプロジェクトの言語戦略
-
-#### Phase 1: Python（バックエンド） + HTML/HTMX（フロントエンド）
-
-**構成**:
-```
-backend/
-├── main.py              # FastAPI
-├── domain/
-│   └── tax_calculator.py    # Python
-frontend/
-├── index.html           # HTMX
-└── styles.css
-```
-
-**理由**:
-- 最速でMVPをリリース
-- 税金計算はPythonが得意
-- フロントエンドはシンプルに
-
----
-
-#### Phase 2: Python（バックエンド） + TypeScript/React（フロントエンド）
-
-**構成**:
-```
-backend/
-├── main.py              # FastAPI
-├── domain/
-│   ├── tax_calculator.py    # Python
-│   └── investment_calculator.py
-frontend/
-├── src/
-│   ├── components/      # React + TypeScript
-│   └── api/
-│       └── types.ts     # バックエンドAPI型定義
-```
+- WebAssembly化（ブラウザで大規模モンテカルロシミュレーション）
+- 計算エンジンの最適化（10万回を1秒以内で実行）
+- Go でも遅い場合の最終手段
 
 **理由**:
 
-- リッチなUI（グラフ、インタラクション）
-- 型安全なフロントエンド
-- API型定義を共有
+- Phase 1-2: TypeScriptで十分
+- Phase 3: パフォーマンスボトルネックが測定された場合のみ
+- WebAssemblyなら TypeScriptコードから呼び出せる
 
 ---
 
-#### Phase 3: 言語ミックス（パフォーマンス最適化）
+### 2.5.1 このプロジェクトの言語戦略（型安全性を最優先）
 
-##### シナリオA: Python + Go（マイクロサービス化）
+#### ✅ 推奨: Phase 1から TypeScript フルスタック
+
+**構成**:
+
+```
+financial-app/
+├── shared/
+│   └── domain/
+│       ├── taxCalculator.ts      # 計算ロジック（共有）
+│       ├── simulationEngine.ts   # シミュレーション（共有）
+│       └── types.ts               # 型定義（共有）
+├── backend/
+│   ├── api/
+│   │   └── simulation.ts         # Node.js/Deno/Bun
+│   └── db/
+│       └── repository.ts
+├── frontend/
+│   └── src/
+│       ├── components/           # React + TypeScript
+│       └── hooks/
+└── tests/
+    └── domain/
+        └── taxCalculator.test.ts # Jest/Vitest
+```
+
+**技術スタック**:
+
+- **バックエンド**: Deno または Bun（推奨）、または Node.js
+- **フロントエンド**: React + TypeScript + Vite
+- **共有ロジック**: `shared/domain/` に計算ロジックを配置
+- **テスト**: Vitest（Deno/Bun）または Jest（Node.js）
+- **型チェック**: `tsc --noEmit`（CI/CDで実行）
+
+**メリット**:
+
+1. **型安全性**: コンパイル時にエラーを検出（金融計算で最重要）
+2. **コード共有**: フロント/バックで同じ計算ロジックを使用
+3. **リアルタイムプレビュー**: クライアントサイドで計算結果を即座に表示
+4. **学習効率**: チームが1つの言語に集中
+5. **保守性**: 税制変更時の修正が1箇所で済む
+
+**なぜ Deno/Bun を推奨するか**:
+
+- **Deno**:
+  - TypeScript ネイティブ（トランスパイル不要）
+  - 標準ライブラリが充実
+  - セキュア（デフォルトでサンドボックス）
+  - `deno test` でテスト実行
+
+- **Bun**:
+  - 超高速（Node.jsの3倍速い）
+  - TypeScript/JSX ネイティブ
+  - `bun test` でテスト実行
+  - npm互換
+
+---
+
+#### Phase 2: パフォーマンス最適化（測定後に判断）
+
+##### シナリオA: TypeScript + Go（ハイブリッド）
+
+###### パフォーマンスボトルネックが測定された場合のみ
+
+```
+financial-app/
+├── shared/domain/              # TypeScript（共有）
+├── backend/
+│   ├── api/                    # TypeScript (Deno/Bun)
+│   └── calculation-engine/     # Go（高速計算エンジン）
+│       └── monte_carlo.go      # 10,000シナリオ並列実行
+├── frontend/                   # TypeScript + React
+└── scripts/                    # Python（データ分析のみ）
+```
+
+**Goに移行すべきタイミング**:
+
+- TypeScriptで10,000シナリオのモンテカルロに10秒以上かかる
+- 並行ユーザー数が1,000人を超える
+- CPU使用率が常に80%以上
+
+##### シナリオB: TypeScript + Rust/WASM（ブラウザ最適化）
+
+###### クライアントサイドで重い計算が必要な場合
+
+```
+financial-app/
+├── shared/domain/              # TypeScript
+├── backend/                    # TypeScript
+├── frontend/
+│   ├── src/                    # TypeScript + React
+│   └── wasm/
+│       └── monte_carlo.wasm    # Rust → WebAssembly
+└── wasm-src/
+    └── monte_carlo.rs          # Rust
+```
+
+**Rustに移行すべきタイミング**:
+
+- ブラウザで100,000シナリオのシミュレーションが必要
+- モバイルデバイスでのパフォーマンスが重要
+- サーバーコストを削減したい（計算をクライアントサイドに移行）
+
+---
+
+#### Phase 3: マイクロサービス化（スケール時）
+
+##### ユーザー数10,000人以上、チーム5人以上の場合
 
 ```
 services/
-├── api-gateway/         # Go（高速、並行処理）
-├── simulation-service/  # Python（数値計算）
-├── calculation-engine/  # Go（大規模並行シミュレーション）
-└── user-service/        # Python or Go
-```
-
-##### シナリオB: Python + Rust（計算エンジン最適化）
-
-```
-backend/
-├── main.py              # FastAPI
-├── domain/
-│   ├── tax_calculator.py    # Python
-│   └── monte_carlo.so       # Rust（PyO3でPythonから呼び出し）
-```
-
-##### シナリオC: TypeScript（フルスタック統一）
-
-```
-backend/
-├── src/
-│   ├── api/             # Node.js + TypeScript
-│   └── domain/          # TypeScript
-frontend/
-├── src/                 # React + TypeScript
-shared/
-├── types/               # 型定義を共有
+├── api-gateway/                # Go（高速、並行処理）
+├── simulation-service/         # TypeScript（ビジネスロジック）
+├── calculation-engine/         # Go（大規模並行計算）
+├── user-service/               # TypeScript
+└── analytics-service/          # Python（データ分析）
 ```
 
 ---
 
-### 2.5.2 言語選択の判断基準
+### 2.5.2 言語選択の判断基準（型安全性ファースト）
 
-**新しい言語を追加する前のチェックリスト**:
+#### 最重要原則
 
-```
+> **金融アプリでは型安全性が最優先**
+>
+> 動的型付け言語（Python、JavaScript）は本番の計算ロジックには使用しない。
+> TypeScript、Go、Rustのみを採用する。
+
+#### 新しい言語を追加する前のチェックリスト
+
+```text
 □ 測定: 既存言語ではパフォーマンス要件を満たせないか？
+□ 型安全性: 静的型付けか？コンパイル時エラー検出できるか？
 □ ROI: 学習コスト < 得られる利益か？
 □ チーム: メンバーが習得できるか？
 □ 保守: 長期保守のコストは許容範囲か？
@@ -998,16 +1143,28 @@ shared/
 □ 移行パス: 段階的に移行できるか？
 ```
 
-**言語を追加すべきケース**:
+#### 言語を追加すべきケース
 
-- ✅ パフォーマンス測定で明確なボトルネック
-- ✅ 特定ドメインで圧倒的な優位性（例：数値計算でPython、並行処理でGo）
-- ✅ WebAssemblyなど新技術の活用
+- ✅ パフォーマンス測定で明確なボトルネック（10秒以上の遅延）
+- ✅ WebAssemblyで計算をクライアントサイドに移行
+- ✅ 型安全性を保ちながら特定の優位性がある
 
-**言語を追加すべきでないケース**:
+#### 言語を追加すべきでないケース
+
 - ❌ 流行っているから
 - ❌ 好きな言語だから
 - ❌ 測定せずにパフォーマンスを懸念
+- ❌ **動的型付け言語を本番計算ロジックに使う**
+
+#### このプロジェクトの最終決定
+
+| 言語 | 採用範囲 | 理由 |
+|------|---------|------|
+| **TypeScript** | フルスタック（Phase 1〜） | 型安全性、コード共有、学習効率 |
+| **Go** | 計算エンジン（Phase 2〜、測定後） | パフォーマンス、並行処理 |
+| **Rust** | WebAssembly（Phase 3〜、測定後） | 極限最適化、ブラウザ実行 |
+| **Python** | スクリプトのみ | データ分析、ツール（本番コード不可） |
+| **JavaScript** | ❌ 不採用 | 動的型付け、TypeScriptで代替 |
 
 ---
 
