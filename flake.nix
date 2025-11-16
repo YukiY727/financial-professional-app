@@ -63,7 +63,7 @@
             nodePackages.typescript-language-server    # TypeScript Language Server
 
             # --- Optional: Performance Monitoring ---
-            nodePackages.clinic  # Node.jsパフォーマンス診断
+            # clinic は nodePackages になし (npm でインストール: npm install -g clinic)
           ];
 
           shellHook = ''
