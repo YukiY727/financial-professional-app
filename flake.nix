@@ -42,7 +42,7 @@
             biome                  # 超高速リンター/フォーマッター (Rust製)
 
             # --- Testing ---
-            nodePackages.vitest    # 高速テストランナー
+            # vitest は nodePackages になし (Deno/Bun に組み込み、または npm でインストール)
 
             # --- Development Tools ---
             nodePackages.nodemon   # ファイル変更監視・自動再起動
