@@ -1043,7 +1043,146 @@ fun SimulationForm() {
 
 ---
 
-#### Option E: Rust（極限最適化用）
+#### Option E: Scala（関数型 + JVM）
+
+**適用例**:
+
+```scala
+// shared/domain/TaxCalculator.scala
+package com.financial.domain
+
+object TaxCalculator {
+  // 代数的データ型で結果を表現
+  sealed trait TaxResult
+  case class Success(amount: Int) extends TaxResult
+  case class Error(message: String) extends TaxResult
+
+  def calculateIncomeTax(taxableIncome: Int): TaxResult = {
+    taxableIncome match {
+      case i if i < 0 =>
+        Error("Taxable income must be non-negative")
+      case i if i <= 1_950_000 =>
+        Success((i * 0.05).toInt)
+      case i if i <= 3_300_000 =>
+        Success((i * 0.10 - 97_500).toInt)
+      case i if i <= 6_950_000 =>
+        Success((i * 0.20 - 427_500).toInt)
+      case _ =>
+        Error("Invalid taxable income")
+    }
+  }
+
+  // イミュータブルな型定義
+  case class TaxCalculationResult(
+    incomeTax: Int,
+    residentTax: Int,
+    socialInsurance: Int
+  ) {
+    val total: Int = incomeTax + residentTax + socialInsurance
+  }
+
+  // 関数型スタイル: パイプライン処理
+  def simulateYears(profile: Profile): List[YearlyRecord] = {
+    (profile.currentAge to profile.retirementAge).toList
+      .map(age => calculateYear(age, profile))
+      .scanLeft(InitialState)(updateState)
+      .map(toRecord)
+  }
+}
+
+// バックエンド: Play Framework / Akka HTTP
+// backend/app/controllers/SimulationController.scala
+class SimulationController extends Controller {
+  def simulate = Action.async(parse.json) { request =>
+    request.body.validate[SimulationRequest].fold(
+      errors => BadRequest(errors),
+      req => {
+        val result = TaxCalculator.calculateIncomeTax(req.income)
+        result match {
+          case Success(tax) => Ok(Json.obj("tax" -> tax))
+          case Error(msg) => BadRequest(Json.obj("error" -> msg))
+        }
+      }
+    )
+  }
+}
+
+// フロントエンド: Scala.js
+// frontend/src/main/scala/components/SimulationForm.scala
+@JSExportTopLevel("SimulationForm")
+object SimulationForm {
+  def previewTax(income: Int): TaxResult = {
+    TaxCalculator.calculateIncomeTax(income) // 共有ロジック
+  }
+}
+```
+
+**Pros**:
+
+- ✅ **型安全性**: 最強クラスの型システム（代数的データ型、高階型）
+- ✅ **関数型**: イミュータブル、純粋関数、モナド、for内包表記
+- ✅ **JVM**: Java資産の活用、高パフォーマンス
+- ✅ **Scala.js**: フロントエンドでもScalaを使える（コード共有）
+- ✅ **表現力**: 簡潔で読みやすいコード、DSL作成が容易
+- ✅ **並行処理**: Akka（アクターモデル）、ZIO（関数型並行処理）
+- ✅ **エコシステム**: Play Framework、Akka、Cats、ZIO
+
+**Cons**:
+
+- ❌ **学習コスト**: 非常に高い（関数型パラダイム、複雑な型システム）
+- ❌ **コンパイル時間**: 非常に遅い（大規模プロジェクトで問題）
+- ❌ **バイナリサイズ**: JVMランタイムが重い
+- ❌ **エッジ環境**: サーバーレスには不向き
+- ❌ **フロントエンド**: Scala.jsはReactより未成熟、バンドルサイズ大
+- ❌ **人材**: 採用が非常に困難（関数型に精通した人材が少ない）
+- ❌ **バージョン**: Scala 2 vs Scala 3 の分断
+
+**適用判断**:
+
+- ✅ 関数型プログラミングを本格的に活用したい
+- ✅ 複雑なビジネスロジックを型で表現したい
+- ✅ JVM環境が前提（既存のJavaシステムと連携）
+- ✅ チームが関数型プログラミングに精通している
+- ✅ Akkaでの分散システム構築
+
+**このプロジェクトでの選択**: ❌ **不採用（推奨しない）**
+
+**不採用の理由**:
+
+- **学習コスト > ROI**: 関数型の学習コストが高すぎる
+- **コンパイル遅い**: 開発体験が悪化
+- **人材難**: Scala経験者の採用が困難
+- **TypeScriptで十分**: 関数型の要素はTypeScriptでも実現可能
+
+**TypeScript vs Kotlin vs Scala 比較**:
+
+| 項目 | TypeScript | Kotlin | Scala |
+|------|-----------|--------|-------|
+| **型安全性** | 静的型付け | 静的型付け + Null安全 | 最強（代数的データ型） |
+| **関数型** | 部分的 | 部分的 | 完全 |
+| **学習コスト** | 低い | 中程度 | **非常に高い** |
+| **コンパイル速度** | 速い | 中程度 | **非常に遅い** |
+| **フロントエンド** | React（成熟） | Compose Web（未成熟） | Scala.js（未成熟） |
+| **人材確保** | 容易 | やや困難 | **非常に困難** |
+| **エコシステム** | npm（巨大） | Maven/Gradle | Maven/sbt |
+
+**結論**:
+
+- **金融アプリには過剰**: 型システムの恩恵 < 学習コスト
+- **TypeScript推奨**: 実用的な型安全性とバランスが良い
+- **Kotlinで十分**: モバイルアプリ必要ならKotlin
+- **Scalaは避ける**: 小規模チームには複雑すぎる
+
+**Scalaを検討すべき稀なケース**:
+
+- ✅ 既存システムがScala（Play Framework等）
+- ✅ チーム全員が関数型プログラミング経験豊富
+- ✅ 複雑な金融デリバティブ計算（型で表現）
+- ✅ Akkaでの分散システムが必須
+
+---
+
+#### Option F: Rust（極限最適化用）
 
 **適用例**:
 
@@ -1274,6 +1413,7 @@ services/
 | **Go** | 計算エンジン（Phase 2〜、測定後） | パフォーマンス、並行処理 | ⏰ 測定後 |
 | **Rust** | WebAssembly（Phase 3〜、測定後） | 極限最適化、ブラウザ実行 | ⏰ 測定後 |
 | **Python** | スクリプトのみ | データ分析、ツール（本番コード不可） | ⚠️ 補助のみ |
+| **Scala** | ❌ 不採用 | 学習コスト高、コンパイル遅い、人材難 | ❌ 不採用 |
 | **JavaScript** | ❌ 不採用 | 動的型付け、TypeScriptで代替 | ❌ 不採用 |
 
 #### TypeScript vs Kotlin: 選択基準
