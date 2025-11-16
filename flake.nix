@@ -56,7 +56,7 @@
             jq             # JSONパーサー
             gh             # GitHub CLI
             git            # Git
-            gitui          # Git TUI
+            # gitui は一時的に削除 (ビルドエラーのため)
 
             # --- Editor Support ---
             nodePackages.vscode-langservers-extracted  # HTML/CSS/JSON Language Server
