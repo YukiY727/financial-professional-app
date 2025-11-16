@@ -934,7 +934,116 @@ df.plot(x='income', y='effective_rate')
 
 ---
 
-#### Option D: Rust（極限最適化用）
+#### Option D: Kotlin（JVM/マルチプラットフォーム）
+
+**適用例**:
+
+```kotlin
+// shared/domain/TaxCalculator.kt (Kotlin Multiplatform)
+package com.financial.domain
+
+fun calculateIncomeTax(taxableIncome: Int): Int {
+    return when {
+        taxableIncome <= 1_950_000 -> (taxableIncome * 0.05).toInt()
+        taxableIncome <= 3_300_000 -> (taxableIncome * 0.10 - 97_500).toInt()
+        taxableIncome <= 6_950_000 -> (taxableIncome * 0.20 - 427_500).toInt()
+        else -> throw IllegalArgumentException("Invalid taxable income: $taxableIncome")
+    }
+}
+
+// 型定義
+data class TaxCalculationResult(
+    val incomeTax: Int,
+    val residentTax: Int,
+    val socialInsurance: Int,
+    val total: Int
+)
+
+// バックエンド: Ktor (JVM)
+// backend/src/main/kotlin/api/SimulationRoute.kt
+import com.financial.domain.calculateIncomeTax
+
+fun Route.simulationRoutes() {
+    post("/api/simulate") {
+        val request = call.receive<SimulationRequest>()
+        val tax = calculateIncomeTax(request.income)
+        call.respond(tax)
+    }
+}
+
+// フロントエンド: Kotlin/JS or Compose Web
+// frontend/src/main/kotlin/components/SimulationForm.kt
+import com.financial.domain.calculateIncomeTax
+
+@Composable
+fun SimulationForm() {
+    val previewTax = calculateIncomeTax(income) // 共有ロジック
+    // ...
+}
+```
+
+**Pros**:
+
+- ✅ **型安全性**: 静的型付け、Null安全、コンパイル時エラー検出
+- ✅ **Kotlin Multiplatform**: JVM、JS、Native、Wasmで同じコードを実行
+- ✅ **コード共有**: バックエンド(JVM)、フロントエンド(JS/Wasm)、モバイル(Native)
+- ✅ **言語設計**: モダンで簡潔、Javaとの相互運用性
+- ✅ **エコシステム**: Spring Boot、Ktor、Compose、Android
+- ✅ **Jetpack Compose**: 宣言的UIフレームワーク（Web、Desktop、Mobile）
+- ✅ **パフォーマンス**: JVM最適化、GraalVM Native Imageでネイティブバイナリ
+
+**Cons**:
+
+- ⚠️ **学習コスト**: TypeScriptより高い（Coroutines、Flow等）
+- ⚠️ **フロントエンド**: Kotlin/JSはReactより未成熟
+- ⚠️ **ビルド時間**: JVMのコンパイルが遅い
+- ⚠️ **バンドルサイズ**: Kotlin/JSのランタイムサイズが大きい
+- ⚠️ **エッジ環境**: Vercel等のサーバーレスには不向き（GraalVMは可）
+
+**適用判断**:
+
+- ✅ JVM環境が前提（既存システムがJava/Kotlin）
+- ✅ Androidアプリも開発予定
+- ✅ 型安全性とパフォーマンスの両立
+- ✅ マルチプラットフォーム（サーバー、Web、モバイル）
+
+**このプロジェクトでの選択**: ⏰ **条件付きで検討可能**
+
+**採用すべきケース**:
+
+- ✅ チームがKotlinに精通している
+- ✅ 将来的にAndroid/iOSアプリを開発予定
+- ✅ 既存のJavaシステムとの連携が必要
+- ✅ Spring Bootなどのエンタープライズ環境
+
+**採用を避けるべきケース**:
+
+- ❌ チームがTypeScriptに慣れている
+- ❌ エッジ環境（Vercel、Cloudflare Workers）で動かしたい
+- ❌ フロントエンドのエコシステム（React）を最大限活用したい
+
+**TypeScript vs Kotlin の比較**:
+
+| 項目 | TypeScript | Kotlin |
+|------|-----------|--------|
+| **型安全性** | ✅ 静的型付け | ✅ 静的型付け + Null安全 |
+| **コード共有** | ✅ フロント/バック | ✅ JVM/JS/Native/Wasm |
+| **エコシステム** | ✅ npm（巨大） | ⚠️ Maven/Gradle（やや小） |
+| **フロントエンド** | ✅ React（成熟） | ⚠️ Compose Web（未成熟） |
+| **バックエンド** | ✅ Node/Deno/Bun | ✅ Ktor/Spring Boot |
+| **学習コスト** | ✅ 低い | ⚠️ 中程度 |
+| **パフォーマンス** | ⚠️ Node.jsは遅い | ✅ JVM最適化 |
+| **モバイル** | ⚠️ React Native | ✅ Kotlin Multiplatform |
+| **デプロイ** | ✅ エッジ環境 | ⚠️ JVM（重い） |
+
+**結論**:
+
+- **TypeScript推奨**: Web中心、エッジ環境、React使いたい
+- **Kotlin検討可**: モバイルアプリ必須、JVM環境、型安全性+パフォーマンス重視
+
+---
+
+#### Option E: Rust（極限最適化用）
 
 **適用例**:
 
@@ -1158,13 +1267,34 @@ services/
 
 #### このプロジェクトの最終決定
 
-| 言語 | 採用範囲 | 理由 |
-|------|---------|------|
-| **TypeScript** | フルスタック（Phase 1〜） | 型安全性、コード共有、学習効率 |
-| **Go** | 計算エンジン（Phase 2〜、測定後） | パフォーマンス、並行処理 |
-| **Rust** | WebAssembly（Phase 3〜、測定後） | 極限最適化、ブラウザ実行 |
-| **Python** | スクリプトのみ | データ分析、ツール（本番コード不可） |
-| **JavaScript** | ❌ 不採用 | 動的型付け、TypeScriptで代替 |
+| 言語 | 採用範囲 | 理由 | 優先度 |
+|------|---------|------|--------|
+| **TypeScript** | フルスタック（Phase 1〜） | 型安全性、コード共有、学習効率 | ✅ 最推奨 |
+| **Kotlin** | フルスタック（条件付き） | Null安全、モバイル対応、JVM | ⏰ 条件次第 |
+| **Go** | 計算エンジン（Phase 2〜、測定後） | パフォーマンス、並行処理 | ⏰ 測定後 |
+| **Rust** | WebAssembly（Phase 3〜、測定後） | 極限最適化、ブラウザ実行 | ⏰ 測定後 |
+| **Python** | スクリプトのみ | データ分析、ツール（本番コード不可） | ⚠️ 補助のみ |
+| **JavaScript** | ❌ 不採用 | 動的型付け、TypeScriptで代替 | ❌ 不採用 |
+
+#### TypeScript vs Kotlin: 選択基準
+
+**TypeScript を選ぶべきケース（デフォルト推奨）**:
+
+- ✅ Webアプリケーションが中心
+- ✅ React等のフロントエンドエコシステムを活用したい
+- ✅ エッジ環境（Vercel、Cloudflare Workers）で動かしたい
+- ✅ npm/Denoの巨大エコシステムを活用したい
+- ✅ チームがJavaScript/TypeScriptに慣れている
+- ✅ 軽量でシンプルな構成を優先
+
+**Kotlin を選ぶべきケース（条件付き）**:
+
+- ✅ Android/iOSアプリも開発する予定がある
+- ✅ JVM環境が必須（既存システムとの連携）
+- ✅ Spring Boot等のエンタープライズフレームワークを使いたい
+- ✅ Null安全性を言語レベルで強制したい
+- ✅ チームがKotlin/Javaに精通している
+- ✅ パフォーマンスが最初から重要（JVM最適化）
 
 ---
 
