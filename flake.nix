@@ -37,16 +37,14 @@
             # ts-node は削除 (Node.js 22.6.0+ に組み込み: node --experimental-strip-types)
 
             # --- Linters & Formatters ---
-            nodePackages.prettier  # コードフォーマッター
-            nodePackages.eslint    # JavaScript/TypeScriptリンター
             biome                  # 超高速リンター/フォーマッター (Rust製)
+            # prettier, eslint は pnpm でプロジェクトごとにインストール
 
             # --- Testing ---
-            # vitest は nodePackages になし (Deno/Bun に組み込み、または npm でインストール)
+            # vitest, jest は pnpm でプロジェクトごとにインストール
 
             # --- Development Tools ---
-            nodePackages.nodemon   # ファイル変更監視・自動再起動
-            nodePackages.concurrently  # 複数コマンド同時実行
+            # nodemon, concurrently は pnpm でプロジェクトごとにインストール
 
             # --- Database (開発用) ---
             postgresql_16  # PostgreSQL 16
@@ -59,11 +57,8 @@
             # gitui は一時的に削除 (ビルドエラーのため)
 
             # --- Editor Support ---
-            nodePackages.vscode-langservers-extracted  # HTML/CSS/JSON Language Server
-            nodePackages.typescript-language-server    # TypeScript Language Server
-
-            # --- Optional: Performance Monitoring ---
-            # clinic は nodePackages になし (npm でインストール: npm install -g clinic)
+            # Language Serversは各エディタで自動インストールされる
+            # または pnpm でプロジェクトごとにインストール
           ];
 
           shellHook = ''
