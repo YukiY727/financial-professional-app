@@ -34,7 +34,7 @@
 
             # --- TypeScript Tools ---
             typescript # TypeScriptコンパイラ (tsc)
-            nodePackages.ts-node # TypeScript実行環境
+            # ts-node は削除 (Node.js 22.6.0+ に組み込み: node --experimental-strip-types)
 
             # --- Linters & Formatters ---
             nodePackages.prettier  # コードフォーマッター
@@ -84,6 +84,7 @@
             echo "  - Deno プロジェクト初期化:  deno init"
             echo "  - Bun プロジェクト初期化:   bun init"
             echo "  - Node プロジェクト初期化:  pnpm init"
+            echo "  - TypeScript直接実行 (Node): node --experimental-strip-types file.ts"
             echo "  - テスト実行:               bun test or deno test"
             echo ""
             echo "📚 ドキュメント:"
