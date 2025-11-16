@@ -690,7 +690,328 @@ def calculate_income_tax(income):
 
 ---
 
-### 2.5 フロントエンド技術
+### 2.5 プログラミング言語選択
+
+#### 基本方針：フェーズによる柔軟な言語選択
+
+**原則**:
+- **フェーズごとに最適な言語を選択可能**
+- **ただし、無計画な言語追加は避ける**
+- **保守コスト（学習、ツール、デプロイ）を常に考慮**
+
+---
+
+#### Option A: Python
+
+**適用例**:
+```python
+# backend/domain/tax_calculator.py
+def calculate_income_tax(taxable_income: int) -> int:
+    """所得税を計算"""
+    if taxable_income <= 1_950_000:
+        return int(taxable_income * 0.05)
+    elif taxable_income <= 3_300_000:
+        return int(taxable_income * 0.10 - 97_500)
+    # ...
+```
+
+**Pros**:
+
+- **生産性**: シンプルな文法、早い開発速度
+- **数値計算**: NumPy、Pandas、SciPyなど強力なライブラリ
+- **データ分析**: データサイエンス、統計処理に強い
+- **Webフレームワーク**: FastAPI、Djangoが優秀
+- **型ヒント**: Python 3.10+ では型安全性が向上
+- **学習コスト**: 低い（初心者でも習得しやすい）
+- **テスト**: pytest、unittest が成熟
+
+**Cons**:
+
+- **パフォーマンス**: 実行速度が遅い（GILの制約）
+- **型安全性**: 動的型付け（ランタイムエラーのリスク）
+- **デプロイ**: 依存関係の管理が面倒（requirements.txt、venv）
+- **並行処理**: マルチスレッドが弱い（asyncio は強い）
+- **大規模**: 大規模システムでは設計が難しい
+
+**適用判断**:
+
+- ✅ MVP、プロトタイプ
+- ✅ データ分析、統計処理
+- ✅ 数値計算ロジック（税金、投資シミュレーション）
+- ✅ Web API（FastAPI）
+
+**このプロジェクトでの選択**: ✅ **Phase 1-2 のバックエンドで採用**
+
+**理由**:
+- 税金計算、投資計算は数値処理が中心
+- FastAPI で高速なAPI開発
+- MVP段階では生産性を最優先
+
+---
+
+#### Option B: TypeScript
+
+**適用例**:
+
+```typescript
+// frontend/src/domain/taxCalculator.ts
+export function calculateIncomeTax(taxableIncome: number): number {
+  if (taxableIncome <= 1_950_000) {
+    return Math.floor(taxableIncome * 0.05);
+  } else if (taxableIncome <= 3_300_000) {
+    return Math.floor(taxableIncome * 0.10 - 97_500);
+  }
+  // ...
+}
+
+// API型定義
+interface SimulationRequest {
+  profile: {
+    currentAge: number;
+    retirementAge: number;
+    currentAnnualIncome: number;
+  };
+}
+```
+
+**Pros**:
+
+- **型安全**: 静的型チェック、コンパイル時エラー検出
+- **フロントエンド**: React、Vue、Angularのデファクトスタンダード
+- **バックエンド**: Node.js、Deno、Bunで使える
+- **エコシステム**: npm、型定義ライブラリが豊富
+- **開発体験**: IDE補完、リファクタリング支援が強力
+- **型共有**: フロントエンド/バックエンドで型を共有可能
+
+**Cons**:
+
+- **学習コスト**: 型システムの理解が必要
+- **ビルド**: トランスパイルが必要（tsc、esbuild）
+- **パフォーマンス**: Node.jsは計算処理が遅い
+- **数値計算**: ライブラリがPythonほど充実していない
+
+**適用判断**:
+
+- ✅ フロントエンド（React、Vue）
+- ✅ フルスタック（型共有のメリット）
+- ✅ 型安全性が重要な箇所
+- ✅ バックエンドAPI（Node.js、Deno）
+
+**このプロジェクトでの選択**: ✅ **Phase 2以降のフロントエンドで採用**
+
+**理由**:
+- React + TypeScriptでリッチなUIを構築
+- API型定義をバックエンドと共有可能
+- 型安全性でバグを減らす
+
+---
+
+#### Option C: Go
+
+**適用例**:
+
+```go
+// backend/domain/tax_calculator.go
+package domain
+
+func CalculateIncomeTax(taxableIncome int) int {
+    if taxableIncome <= 1_950_000 {
+        return taxableIncome * 5 / 100
+    } else if taxableIncome <= 3_300_000 {
+        return taxableIncome * 10 / 100 - 97_500
+    }
+    // ...
+}
+```
+
+**Pros**:
+
+- **パフォーマンス**: C言語並みの高速処理
+- **並行処理**: goroutine、channelで並行処理が容易
+- **シンプル**: 言語仕様が小さい、学習コスト低い
+- **型安全**: 静的型付け、コンパイル時エラー検出
+- **デプロイ**: シングルバイナリ、依存関係なし
+- **スケーラビリティ**: 大規模システムに強い
+- **メモリ効率**: GC付きで低メモリ消費
+
+**Cons**:
+
+- **エコシステム**: Webフレームワークが少ない
+- **数値計算**: ライブラリがPythonより少ない
+- **ジェネリクス**: Go 1.18+ で追加されたが制約あり
+- **エラーハンドリング**: if err != nil の繰り返し
+
+**適用判断**:
+
+- ✅ パフォーマンスが重要
+- ✅ 大量の並行処理（Webサーバー、バッチ処理）
+- ✅ マイクロサービス
+- ✅ スケーラビリティが必要
+
+**このプロジェクトでの選択**: ⏰ **Phase 3以降で部分採用を検討**
+
+**採用検討シナリオ**:
+- 大規模シミュレーション（10,000シナリオのモンテカルロ）
+- パフォーマンスボトルネック（計算エンジン）
+- マイクロサービス化（simulation-service）
+
+---
+
+#### Option D: Rust
+
+**適用例**:
+```rust
+// backend/domain/tax_calculator.rs
+pub fn calculate_income_tax(taxable_income: u32) -> u32 {
+    match taxable_income {
+        0..=1_950_000 => (taxable_income as f64 * 0.05) as u32,
+        1_950_001..=3_300_000 => (taxable_income as f64 * 0.10 - 97_500.0) as u32,
+        // ...
+    }
+}
+```
+
+**Pros**:
+
+- **パフォーマンス**: C/C++並みの最高速度
+- **メモリ安全**: 所有権システム、ゼロコストな抽象化
+- **型安全**: 強力な型システム、コンパイル時エラー検出
+- **並行処理**: データ競合をコンパイル時に防ぐ
+- **WebAssembly**: ブラウザで実行可能（フロントエンド計算）
+
+**Cons**:
+
+- **学習コスト**: 非常に高い（所有権、ライフタイム）
+- **開発速度**: コンパイルエラーと戦う時間が長い
+- **エコシステム**: Webフレームワークが未成熟
+- **採用**: 人材が少ない
+
+**適用判断**:
+
+- ✅ 極限のパフォーマンス
+- ✅ WebAssembly（ブラウザで重い計算）
+- ✅ システムプログラミング
+- ❌ MVP、プロトタイプ（学習コストが高すぎる）
+
+**このプロジェクトでの選択**: ⏰ **Phase 4以降で部分採用を検討**
+
+**採用検討シナリオ**:
+- WebAssembly化（ブラウザで大規模シミュレーション）
+- 計算エンジンの最適化（モンテカルロ10万回）
+
+---
+
+### 2.5.1 このプロジェクトの言語戦略
+
+#### Phase 1: Python（バックエンド） + HTML/HTMX（フロントエンド）
+
+**構成**:
+```
+backend/
+├── main.py              # FastAPI
+├── domain/
+│   └── tax_calculator.py    # Python
+frontend/
+├── index.html           # HTMX
+└── styles.css
+```
+
+**理由**:
+- 最速でMVPをリリース
+- 税金計算はPythonが得意
+- フロントエンドはシンプルに
+
+---
+
+#### Phase 2: Python（バックエンド） + TypeScript/React（フロントエンド）
+
+**構成**:
+```
+backend/
+├── main.py              # FastAPI
+├── domain/
+│   ├── tax_calculator.py    # Python
+│   └── investment_calculator.py
+frontend/
+├── src/
+│   ├── components/      # React + TypeScript
+│   └── api/
+│       └── types.ts     # バックエンドAPI型定義
+```
+
+**理由**:
+
+- リッチなUI（グラフ、インタラクション）
+- 型安全なフロントエンド
+- API型定義を共有
+
+---
+
+#### Phase 3: 言語ミックス（パフォーマンス最適化）
+
+##### シナリオA: Python + Go（マイクロサービス化）
+
+```
+services/
+├── api-gateway/         # Go（高速、並行処理）
+├── simulation-service/  # Python（数値計算）
+├── calculation-engine/  # Go（大規模並行シミュレーション）
+└── user-service/        # Python or Go
+```
+
+##### シナリオB: Python + Rust（計算エンジン最適化）
+
+```
+backend/
+├── main.py              # FastAPI
+├── domain/
+│   ├── tax_calculator.py    # Python
+│   └── monte_carlo.so       # Rust（PyO3でPythonから呼び出し）
+```
+
+##### シナリオC: TypeScript（フルスタック統一）
+
+```
+backend/
+├── src/
+│   ├── api/             # Node.js + TypeScript
+│   └── domain/          # TypeScript
+frontend/
+├── src/                 # React + TypeScript
+shared/
+├── types/               # 型定義を共有
+```
+
+---
+
+### 2.5.2 言語選択の判断基準
+
+**新しい言語を追加する前のチェックリスト**:
+
+```
+□ 測定: 既存言語ではパフォーマンス要件を満たせないか？
+□ ROI: 学習コスト < 得られる利益か？
+□ チーム: メンバーが習得できるか？
+□ 保守: 長期保守のコストは許容範囲か？
+□ エコシステム: ライブラリ、ツールは十分か？
+□ デプロイ: CI/CDパイプラインへの影響は？
+□ 移行パス: 段階的に移行できるか？
+```
+
+**言語を追加すべきケース**:
+
+- ✅ パフォーマンス測定で明確なボトルネック
+- ✅ 特定ドメインで圧倒的な優位性（例：数値計算でPython、並行処理でGo）
+- ✅ WebAssemblyなど新技術の活用
+
+**言語を追加すべきでないケース**:
+- ❌ 流行っているから
+- ❌ 好きな言語だから
+- ❌ 測定せずにパフォーマンスを懸念
+
+---
+
+### 2.6 フロントエンド技術
 
 #### Option A: React + TypeScript + Vite
 
