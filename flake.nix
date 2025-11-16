@@ -30,7 +30,7 @@
 
             # --- Build Tools ---
             esbuild    # 超高速バンドラー
-            turbo      # Turborepoモノレポツール
+            # turbo は一時的に削除 (ビルドエラーのため)
 
             # --- TypeScript Tools ---
             typescript # TypeScriptコンパイラ (tsc)
