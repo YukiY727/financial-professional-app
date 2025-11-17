@@ -161,48 +161,128 @@
 
 ---
 
-## 🛠️ 技術スタック（予定）
+## 🛠️ 技術スタック
 
 ### バックエンド
 
-- **言語**: Python 3.11+
-- **フレームワーク**: FastAPI or Flask
-- **計算ライブラリ**: NumPy, Pandas（MC用）
+- **言語**: TypeScript (Node.js 22)
+- **フレームワーク**: Express
+- **ビルド**: TypeScript Compiler (tsc)
 
 ### フロントエンド
 
-- **フレームワーク**: React or Vue.js
-- **グラフ**: Chart.js or Recharts
+- **フレームワーク**: React + TypeScript
+- **ビルドツール**: Vite
+- **スタイル**: CSS
+
+### 共有ロジック
+
+- **言語**: TypeScript
+- **配置**: `shared/domain/`
+- **目的**: フロント/バック共通の計算ロジック
 
 ### データ管理
 
-- **Phase 1**: ハードコード（Python定数）
-- **Phase 2**: YAML/JSON設定ファイル
-- **Phase 3**: PostgreSQL + JSONB
+- **Phase 1**: ハードコード（TypeScript定数） ✅
+- **Phase 2**: YAML/JSON設定ファイル（予定）
+- **Phase 3**: PostgreSQL + JSONB（予定）
+
+---
+
+## 🚀 クイックスタート
+
+### 前提条件
+
+- Node.js 22以上
+- npm または pnpm
+
+### 1. 依存関係インストール
+
+```bash
+# バックエンド
+cd backend
+npm install
+
+# フロントエンド
+cd ../frontend
+npm install
+```
+
+### 2. サーバー起動
+
+**ターミナル1: バックエンド**
+```bash
+cd backend
+npm run dev
+```
+
+バックエンドが http://localhost:3000 で起動します。
+
+**ターミナル2: フロントエンド**
+```bash
+cd frontend
+npm run dev
+```
+
+フロントエンドが http://localhost:5173 で起動します。
+
+### 3. ブラウザでアクセス
+
+http://localhost:5173 を開いてシミュレーションを実行できます。
+
+### APIエンドポイント
+
+- **ヘルスチェック**: `GET http://localhost:3000/api/health`
+- **シミュレーション**: `POST http://localhost:3000/api/simulate`
+
+### サンプルリクエスト
+
+```bash
+curl -X POST http://localhost:3000/api/simulate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profile": {
+      "currentAge": 30,
+      "retirementAge": 65,
+      "currentAnnualIncome": 5000000,
+      "incomeGrowthRate": 2.0,
+      "currentSavings": 1000000
+    },
+    "expenseMode": "simple",
+    "simpleExpense": {
+      "savingsRate": 20.0
+    }
+  }'
+```
 
 ---
 
 ## 📊 開発状況
 
-### 完了
+### Phase 1 完了 ✅ (2025-11-17)
 
 - [x] 要件定義
 - [x] ユースケース整理
 - [x] データモデル設計
 - [x] 税金計算仕様策定
 - [x] 技術的負債の記録
+- [x] **UC-001実装（曳光弾型）**
+  - [x] 共有ドメインロジック（TypeScript）
+  - [x] バックエンドAPI（Node.js + Express）
+  - [x] フロントエンド（React + TypeScript）
+  - [x] テストコード作成
+  - [x] 動作確認完了
+
+**詳細**: [IMPLEMENTATION.md](./IMPLEMENTATION.md) を参照
 
 ### 進行中
 
-- [ ] テストケース作成
-- [ ] アーキテクチャ設計
-- [ ] UC-001実装
+- [ ] UC-002実装（年次キャッシュフロー推移）
 
 ### 未着手
 
-- [ ] UC-002実装
 - [ ] UC-101実装
-- [ ] フロントエンド開発
+- [ ] グラフ表示機能
 
 ---
 
@@ -305,4 +385,5 @@ def test_calc_salary_deduction():
 
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
+| 2025-11-17 | 0.2.0 | **Phase 1実装完了**: UC-001（曳光弾型）|
 | 2025-11-16 | 0.1.0 | 初版作成（設計フェーズ完了） |
