@@ -52,6 +52,12 @@ htmlcov/
 # direnv
 .direnv/
 
+# Nix development environment
+.pnpm/
+.deno/
+.bun/
+.postgres/
+
 # Database
 *.db
 *.sqlite

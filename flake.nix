@@ -120,13 +120,24 @@
         };
 
         # --- アプリケーションパッケージ（将来の本番ビルド用） ---
-        packages.default = pkgs.buildNpmPackage {
+        # pnpmを使用する場合は mkPnpmPackage を検討
+        # または stdenv.mkDerivation でカスタムビルドプロセスを定義
+        packages.default = pkgs.stdenv.mkDerivation {
           pname = "financial-simulation-app";
           version = "0.1.0";
           src = ./.;
 
-          # package.jsonが作成されたら有効化
-          # npmDepsHash = pkgs.lib.fakeSha256;
+          nativeBuildInputs = [ pkgs.pnpm pkgs.nodejs_22 ];
+
+          # package.jsonが作成されたら以下を実装:
+          # buildPhase = ''
+          #   pnpm install --frozen-lockfile
+          #   pnpm build
+          # '';
+          # installPhase = ''
+          #   mkdir -p $out
+          #   cp -r dist/* $out/
+          # '';
 
           meta = with pkgs.lib; {
             description = "金融ライフプラン・投資シミュレーションアプリ";
