@@ -84,3 +84,13 @@ build/
 tmp/
 temp/
 *.tmp
+
+# Claude Code
+.claude/
+
+# TypeScript
+*.tsbuildinfo
+
+# Vitest
+coverage/
+.vitest/
