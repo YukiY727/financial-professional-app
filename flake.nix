@@ -56,6 +56,9 @@
             git            # Git
             # gitui は一時的に削除 (ビルドエラーのため)
 
+            # --- Development Scripts (仕様例計算用) ---
+            python3        # Python 3.x (仕様の期待値計算スクリプト用)
+
             # --- Editor Support ---
             # Language Serversは各エディタで自動インストールされる
             # または pnpm でプロジェクトごとにインストール
