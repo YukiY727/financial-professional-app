@@ -12,16 +12,18 @@ document.getElementById('simulationForm')?.addEventListener('submit', (e) => {
   const retirementAge = parseInt(
     (document.getElementById('retirementAge') as HTMLInputElement).value
   )
-  const currentAnnualIncome = parseInt(
-    (document.getElementById('currentAnnualIncome') as HTMLInputElement).value
-  )
+  const currentAnnualIncome =
+    parseInt(
+      (document.getElementById('currentAnnualIncome') as HTMLInputElement).value
+    ) * 10000 // 万円を円に変換
   const incomeGrowthRate =
     parseFloat(
       (document.getElementById('incomeGrowthRate') as HTMLInputElement).value
     ) / 100 // %を小数に変換
-  const currentSavings = parseInt(
-    (document.getElementById('currentSavings') as HTMLInputElement).value
-  )
+  const currentSavings =
+    parseInt(
+      (document.getElementById('currentSavings') as HTMLInputElement).value
+    ) * 10000 // 万円を円に変換
   const savingsRate =
     parseFloat((document.getElementById('savingsRate') as HTMLInputElement).value) /
     100 // %を小数に変換
@@ -43,8 +45,9 @@ document.getElementById('simulationForm')?.addEventListener('submit', (e) => {
 
     document.getElementById('finalAge')!.textContent = `${result.finalAge}歳`
     document.getElementById('totalYears')!.textContent = `${result.totalYears}年`
+    const finalAssetsInManYen = Math.round(result.finalTotalAssets / 10000)
     document.getElementById('finalTotalAssets')!.textContent =
-      `${result.finalTotalAssets.toLocaleString('ja-JP')}円`
+      `${finalAssetsInManYen.toLocaleString('ja-JP')}万円`
 
     // 結果までスムーズにスクロール
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
