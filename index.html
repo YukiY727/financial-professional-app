@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老後資産シミュレーター | UC-001</title>
+  <script src="https://unpkg.com/htmx.org@2.0.8"></script>
+</head>
+<body class="bg-gray-50">
+  <div class="container mx-auto max-w-2xl p-6">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">💰 老後資産シミュレーター</h1>
+        <p class="text-gray-600">UC-001: 老後までにいくら貯まるか</p>
+      </div>
+
+      <!-- Form -->
+      <form id="simulationForm" class="space-y-6">
+        <!-- 現在の年齢 -->
+        <div>
+          <label for="currentAge" class="block text-sm font-semibold text-gray-700 mb-2">
+            現在の年齢
+          </label>
+          <input
+            type="number"
+            id="currentAge"
+            name="currentAge"
+            value="30"
+            required
+            min="20"
+            max="100"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p class="mt-1 text-xs text-gray-500">20〜100歳</p>
+        </div>
+
+        <!-- 退職年齢 -->
+        <div>
+          <label for="retirementAge" class="block text-sm font-semibold text-gray-700 mb-2">
+            退職年齢
+          </label>
+          <input
+            type="number"
+            id="retirementAge"
+            name="retirementAge"
+            value="65"
+            required
+            min="20"
+            max="100"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p class="mt-1 text-xs text-gray-500">現在の年齢より大きい値</p>
+        </div>
+
+        <!-- 現在の年収 -->
+        <div>
+          <label for="currentAnnualIncome" class="block text-sm font-semibold text-gray-700 mb-2">
+            現在の年収（円）
+          </label>
+          <input
+            type="number"
+            id="currentAnnualIncome"
+            name="currentAnnualIncome"
+            value="5000000"
+            required
+            min="0"
+            step="10000"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p class="mt-1 text-xs text-gray-500">額面の年収</p>
+        </div>
+
+        <!-- 昇給率 -->
+        <div>
+          <label for="incomeGrowthRate" class="block text-sm font-semibold text-gray-700 mb-2">
+            昇給率（%）
+          </label>
+          <input
+            type="number"
+            id="incomeGrowthRate"
+            name="incomeGrowthRate"
+            value="2"
+            required
+            min="0"
+            max="100"
+            step="0.1"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p class="mt-1 text-xs text-gray-500">年間の昇給率（例: 2% = 2）</p>
+        </div>
+
+        <!-- 現在の貯金額 -->
+        <div>
+          <label for="currentSavings" class="block text-sm font-semibold text-gray-700 mb-2">
+            現在の貯金額（円）
+          </label>
+          <input
+            type="number"
+            id="currentSavings"
+            name="currentSavings"
+            value="1000000"
+            required
+            min="0"
+            step="10000"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p class="mt-1 text-xs text-gray-500">現在保有している資産</p>
+        </div>
+
+        <!-- 貯金率 -->
+        <div>
+          <label for="savingsRate" class="block text-sm font-semibold text-gray-700 mb-2">
+            貯金率（%）
+          </label>
+          <input
+            type="number"
+            id="savingsRate"
+            name="savingsRate"
+            value="20"
+            required
+            min="0"
+            max="100"
+            step="1"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p class="mt-1 text-xs text-gray-500">手取り収入に対する貯金の割合</p>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+        >
+          計算する
+        </button>
+      </form>
+
+      <!-- Result Section -->
+      <div id="result" class="mt-8 p-6 bg-blue-50 rounded-lg hidden">
+        <h2 class="text-xl font-bold text-blue-900 mb-4">📊 シミュレーション結果</h2>
+
+        <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b border-blue-200">
+            <span class="font-semibold text-gray-700">退職時年齢</span>
+            <span id="finalAge" class="text-lg font-bold text-blue-600">-</span>
+          </div>
+
+          <div class="flex justify-between items-center py-2 border-b border-blue-200">
+            <span class="font-semibold text-gray-700">運用年数</span>
+            <span id="totalYears" class="text-lg font-bold text-blue-600">-</span>
+          </div>
+
+          <div class="flex justify-between items-center py-2">
+            <span class="font-semibold text-gray-700">退職時総資産</span>
+            <span id="finalTotalAssets" class="text-2xl font-bold text-blue-600">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-6 text-center text-sm text-gray-500">
+      Phase 1: 曳光弾型開発 - 最小限のMVP
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
