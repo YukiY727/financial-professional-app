@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "test": "deno test --allow-read --allow-env",
+    "backend": "deno run --allow-net --allow-read --allow-env backend/main.ts",
+    "frontend": "cd frontend && npm run dev"
+  },
+  "imports": {
+    "@std/": "https://deno.land/std@0.208.0/",
+    "@oak/oak": "https://deno.land/x/oak@v12.6.1/mod.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "esnext"]
+  }
+}
